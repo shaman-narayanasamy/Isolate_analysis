@@ -1,0 +1,116 @@
+import subprocess
+
+PWD = os.getcwd()
+
+INPUTDIR = os.environ.get("INPUTDIR")
+OUTPUTDIR = os.environ.get("OUTPUTDIR")
+TMPDIR = os.environ.get("TMPDIR", "/tmp")
+SAMPLE = os.environ.get("SAMPLE")
+SRCDIR = os.environ.get("SRCDIR", "%s/src" % PWD)
+CONFIG = os.environ.get("CONFIG", "conf/config_bigmem183.json")
+DBPATH = os.environ.get("DBPATH", "/mnt/nfs/projects/ecosystem_biology/local_tools/IMP/dependencies/prokka/db")
+
+## Define configurations
+configfile: CONFIG
+
+MEMCORE = os.environ.get("MEMCORE", config['memory_per_core_gb'])
+THREADS = os.environ.get("THREADS", config['threads'])
+MEMTOTAL = os.environ.get("MEMTOTAL", config['memory_total_gb'])
+
+## Define input directories
+TS_DIR = "/mnt/nfs/projects/ecosystem_biology/LAO/time_series/IMP_analysis/LAO_TS"
+ISOLATES_DIR = "/mnt/nfs/projects/ecosystem_biology/LAO/Genomes"
+DATABASES = "/mnt/nfs/projects/ecosystem_biology/LAO/time_series/IMP_analysis/LAO_TS/Databases"
+
+## Define samples
+TS_SAMPLES = ['A01', 'A02', 'D32', 'D36', 'D49']
+
+# removed 00751 (no annotation gff file)
+#ISOLATES = ['Isolate_00005']
+
+ISOLATES = ['Isolate_00005', 'Isolate_00010', 'Isolate_00023', 'Isolate_00028', 'Isolate_00033', 'Isolate_00052A', 'Isolate_00062', 'Isolate_00064', 'Isolate_00065', 'Isolate_00072A', 'Isolate_00073', 'Isolate_00102', 'Isolate_00160B', 'Isolate_00164', 'Isolate_00201', 'Isolate_00201A', 'Isolate_00204', 'Isolate_00204C', 'Isolate_00212C', 'Isolate_00214', 'Isolate_00216B', 'Isolate_00249', 'Isolate_00252A', 'Isolate_00253', 'Isolate_00254', 'Isolate_00255', 'Isolate_00255', 'Isolate_00259', 'Isolate_00260', 'Isolate_00261', 'Isolate_00350B', 'Isolate_00351B', 'Isolate_00352A', 'Isolate_00352A', 'Isolate_00352B', 'Isolate_00353A', 'Isolate_00353C', 'Isolate_00354B', 'Isolate_00357A', 'Isolate_00357B', 'Isolate_00400', 'Isolate_00401', 'Isolate_00403', 'Isolate_00403', 'Isolate_00406', 'Isolate_00408', 'Isolate_00410', 'Isolate_00454A', 'Isolate_00455', 'Isolate_00457', 'Isolate_00459D', 'Isolate_00462B', 'Isolate_00501', 'Isolate_00514', 'Isolate_00522', 'Isolate_00514', 'Isolate_00514', 'Isolate_00522', 'Isolate_00528', 'Isolate_00536', 'Isolate_00539', 'Isolate_00541', 'Isolate_00547', 'Isolate_00548', 'Isolate_00556', 'Isolate_00565', 'Isolate_00575', 'Isolate_00577', 'Isolate_00580', 'Isolate_00589', 'Isolate_00591', 'Isolate_00592', 'Isolate_00601', 'Isolate_00604', 'Isolate_00607', 'Isolate_00608', 'Isolate_00610', 'Isolate_00611', 'Isolate_00660', 'Isolate_00663', 'Isolate_00667', 'Isolate_00701', 'Isolate_00750', 'Isolate_00752', 'Isolate_00810', 'Isolate_00814', 'Isolate_00908', 'Isolate_01055', 'Isolate_01056', 'Isolate_01060']
+
+## Define types of reads (MG/MT)
+TYPES = [ "mg", "mt" ]
+
+
+## Define output directory
+OUTDIR = os.environ.get("OUTDIR", "/mnt/nfs/projects/ecosystem_biology/LAO/Genomes/PopulationAnalysis")
+
+workdir:
+    OUTDIR
+
+include:
+    '../rules/PopulationAnalysis/rename_isolates.rule'
+
+include:
+    '../rules/PopulationAnalysis/rename_isolate_annotation.rule'
+
+include:
+    '../rules/PopulationAnalysis/pool_all_genomes.rule'
+
+include:
+    '../rules/PopulationAnalysis/pool_all_annotations.rule'
+
+include:
+    '../rules/PopulationAnalysis/run_bwa_index.rule'
+
+include:
+    '../rules/PopulationAnalysis/run_bwa.rule'
+
+include:
+    '../rules/PopulationAnalysis/run_bedtools_contig.rule'
+
+include:
+    '../rules/PopulationAnalysis/run_bedtools_gene.rule'
+
+include:
+    '../rules/PopulationAnalysis/run_feature_count.rule'
+
+include:
+    '../rules/PopulationAnalysis/get_gc_content.rule'
+
+include:
+    '../rules/PopulationAnalysis/get_genome_length.rule'
+
+#include:
+#    '../rules/PopulationAnalysis/run_metaquast.rule'
+
+# master command
+rule POPULATION_ANALYSIS:
+    input:
+        expand("RenamedIsolates/{isolate}.fa", isolate = ISOLATES),
+        expand("RenamedIsolates/{isolate}.gff", isolate=ISOLATES),
+        "Index/ALL_isolates.fa",
+        "Index/ALL_isolates.fa.amb",
+        "Index/ALL_isolates.fa.bwt",
+        "Index/ALL_isolates.fa.pac",
+        "Index/ALL_isolates.fa.ann",
+        "Index/ALL_isolates.fa.sa",
+        "Index/ALL_isolates.gff",
+        expand("Mappings/{ts_sample}.{type}.reads.sorted.bam", ts_sample=TS_SAMPLES, type=TYPES),
+        expand("Mappings/{ts_sample}.{type}.reads.sorted.bam.bai", ts_sample=TS_SAMPLES, type=TYPES),
+        expand("Calculations/ContigLevel/{ts_sample}.{type}.contig_coverage.txt", ts_sample=TS_SAMPLES, type=TYPES),
+        expand("Calculations/ContigLevel/{ts_sample}.{type}.contig_depth.txt", ts_sample=TS_SAMPLES, type=TYPES),
+        expand("Calculations/ContigLevel/{ts_sample}.{type}.contig_flagstat.txt", ts_sample=TS_SAMPLES, type=TYPES),
+        expand("Calculations/GeneLevel/{ts_sample}.{type}.annotation.bed.txt", ts_sample=TS_SAMPLES, type=TYPES),
+        expand("Calculations/GeneLevel/{ts_sample}.{type}.gene_depth_hist.txt", ts_sample=TS_SAMPLES, type=TYPES),
+        expand("Calculations/GeneLevel/{ts_sample}.{type}.gene_depth_avg.txt", ts_sample=TS_SAMPLES, type=TYPES),
+        expand("Calculations/GeneLevel/{ts_sample}.{type}.gene_len.txt", ts_sample=TS_SAMPLES, type=TYPES),
+        expand("Calculations/GeneLevel/{ts_sample}.{type}.annotation.featureCounts.txt", ts_sample=TS_SAMPLES, type=TYPES),
+        expand("Calculations/PopulationLevel/{isolate}_gc.txt", isolate=ISOLATES),
+        expand("Calculations/PopulationLevel/{isolate}_length.txt", isolate=ISOLATES),
+#        expand("MetaQuast/{isolate}/summary/report.html", isolate=ISOLATES)
+
+    output:
+        #expand("DoneFiles/{ts_sample}.done", ts_sample=TS_SAMPLES),
+        #expand("DoneFiles/{isolate}.done", isolate=ISOLATES)
+        "workflow_population_analysis_isolates.done"
+
+    shell:
+        """
+        #mkdir -p DoneFiles
+        touch {output}
+        """
+
+

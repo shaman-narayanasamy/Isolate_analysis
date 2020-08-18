@@ -1,0 +1,13 @@
+include:
+    "../rules/Preprocessing/trimming.rules"
+
+include:
+    "../rules/Preprocessing/filtering.rules"
+
+rule PREPROCESSING:
+    input:
+        'Preprocessing/r1.preprocessed.fq',
+        'Preprocessing/r2.preprocessed.fq',
+        'Preprocessing/se.preprocessed.fq'
+    output:
+        touch('Preprocessing/preprocessing.done')

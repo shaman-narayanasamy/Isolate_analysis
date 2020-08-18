@@ -1,0 +1,33 @@
+import subprocess
+
+INPUTDIR = os.environ.get("INPUTDIR")
+OUTPUTDIR = os.environ.get("OUTPUTDIR")
+TMPDIR = os.environ.get("TMPDIR", "/tmp")
+SRCDIR = os.environ.get("SRCDIR", "src")
+CONFIG = os.environ.get("CONFIG", "../conf/config_normalNode.json")
+DBPATH = os.environ.get("DBPATH", "/mnt/nfs/projects/ecosystem_biology/local_tools/IMP/dependencies/prokka/db")
+
+configfile: CONFIG
+
+MEMCORE = os.environ.get("MEMCORE", config['memory_per_core_gb'])
+THREADS = os.environ.get("THREADS", config['threads'])
+MEMTOTAL = os.environ.get("MEMTOTAL", config['memory_total_gb'])
+
+## Define input directory
+GENOMES_DIR = "/mnt/nfs/projects/ecosystem_biology/LAO/Genomes"
+
+## Define GENOMES
+GENOMES = subprocess.check_output("ls /*.fa | sed -e s:Genomes/::g | sed -e s:.fa::g", shell = True)
+GENOMES = [m.decode('utf-8') for m in GENOMES.split()]
+
+## Define output directory
+TB_OUTDIR = os.environ.get("TB_OUTDIR", "/scratch/users/snarayanasamy/LAO_TS_IMP-v1.3/temporal_binning")
+
+workdir:
+    TB_OUTDIR
+
+# master command
+rule GENOMES:
+    input:
+    output:
+        touch('assemble_genomes.done')

@@ -1,0 +1,13 @@
+rule spades_assembly:
+    input:
+        'Preprocessing/r1.preprocessed.fq',
+        'Preprocessing/r2.preprocessed.fq',
+        'Preprocessing/se.preprocessed.fq'
+    output:
+        'Assembly/contigs.fasta',
+        'Assembly/scaffolds.fasta'
+    shell:
+        """
+        spades.py -1 {input[0]} -2 {input[1]} -s {input[2]} -o Assembly -t {THREADS}
+        """
+   

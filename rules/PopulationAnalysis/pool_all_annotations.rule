@@ -1,0 +1,11 @@
+rule pool_annotations:
+    input:
+        expand("RenamedIsolates/{isolate}.gff", isolate=ISOLATES),
+    output:
+        "Index/ALL_isolates.gff"
+    shell:
+        """
+        mkdir -p Index
+        cat {input} > {output}
+        """
+

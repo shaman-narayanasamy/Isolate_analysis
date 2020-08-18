@@ -1,0 +1,13 @@
+rule preprocessed_read_count:
+    input:
+        'Preprocessing/r1.preprocessed.fq',
+        'Preprocessing/r2.preprocessed.fq',
+        'Preprocessing/se.preprocessed.fq'
+    output:
+        expand("Read_stats/read-counts/preprocessed_read_counts.{ext}", ext=['txt'])
+    shell:
+        """
+        mkdir -p Read_stats/read-counts
+
+        paste <(echo $((`wc -l < {input[0]}` / 4))) <(echo $((`wc -l < {input[1]}` / 4))) <(echo $((`wc -l < {input[2]}` / 4))) > {output[0]}
+        """

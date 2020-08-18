@@ -1,0 +1,158 @@
+---
+title: "Isolates abundance tables"
+author: "Susana Martinez Arbas"
+date: "10/26/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(tidyverse)
+library(stringr)
+
+# sample and date 
+samples <- c("A01", "A02", "D32", "D36", "D49")
+read_tsv("~/Documents/LAO_TS_exploration/sample2date.tsv", col_names = c("sample", "date")) %>% 
+  filter(sample %in% samples) -> sample2date
+```
+###Average depth of coverage 
+```{r}
+data.dir <- "~/Documents/Isolates/ContigLevel"
+read_tbs <- function(files, sample2date){
+  for (i in 1:length(files)) {
+  newcol <- as.tibble(files[i]) %>% separate(value, into = c("tmp","tmp1"), sep = "~/Documents/Isolates/ContigLevel/") %>% 
+            separate(tmp1, into = c("sample"), sep = ".m") %>% select(sample) %>% 
+            left_join(., sample2date) %>% mutate(date = as.character(date)) 
+  
+  tmp <- read_tsv(files[i], col_names = c("contig", newcol$date))
+  
+  # aggregating the data of the isolates to calculate the average
+  tmp %>% 
+    separate(contig, into = c("isolate", "tmp"), sep='_NODE_') %>%
+    mutate(contig = paste("NODE_", tmp, sep = "")) %>% select(-tmp, -contig) %>% 
+    gather(sample, depth, -isolate) %>% 
+    group_by(isolate, sample) %>% 
+    summarize(mean_depth = mean(depth, na.rm = T)) %>% 
+    spread(sample, mean_depth) -> tmp
+  
+  ifelse(i==1, mg <- tmp, mg <- full_join(mg, tmp, by = "isolate"))
+  }
+  return(mg)
+}
+
+# get MG table, with average of depth of coverage per isolate
+filesMG <-  paste(data.dir, list.files(data.dir), sep="/") %>% .[grep(".mg.contig_depth.txt", .)] 
+mg <- read_tbs(filesMG, sample2date)
+# get MT table, with average of depth of coverage per isolate
+filesMT <-  paste(data.dir, list.files(data.dir), sep="/") %>% .[grep(".mt.contig_depth.txt", .)] 
+mt <- read_tbs(filesMT, sample2date)
+
+## save the table
+#write_tsv(mg, "~/Documents/Isolates/ALL.average.pop.depth.mg.tsv")
+#write_tsv(mt, "~/Documents/Isolates/ALL.average.pop.depth.mt.tsv")
+```
+
+###Get total reads info
+```{r}
+## functions
+# get total reads and mapped counts per sample
+read_tbs_m <- function(files, sample2date){
+  for (i in 1:length(files)) {
+  newcol <- as.tibble(files[i]) %>% separate(value, into = c("tmp","tmp1"), sep = "~/Documents/Isolates/ContigLevel/") %>% 
+            separate(tmp1, into = c("sample"), sep = ".m") %>% select(sample) %>% 
+            left_join(., sample2date) %>% mutate(date = as.character(date)) 
+  
+  tmp <- read_tsv(files[i], col_names = c(newcol$date)) %>% 
+          slice(c(1,3)) %>% mutate(value = c("total_reads", "mapped_reads"))
+
+  ifelse(i==1, mg_c <- tmp, mg_c <- full_join(mg_c, tmp, by = "value"))
+  }
+  return(mg_c)
+}
+
+# get total counts per isolate
+get_reads_mapped_per_isolate_m <- function(files, sample2date){
+  for (i in 1:length(files)) {
+  newcol <- as.tibble(files[i]) %>% separate(value, into = c("tmp","tmp1"), sep = "~/Documents/Isolates/ContigLevel/") %>% 
+            separate(tmp1, into = c("sample"), sep = ".m") %>% select(sample) %>% 
+            left_join(., sample2date) %>% mutate(date = as.character(date)) 
+  # collapse per isolate (reads mapped per isolate, and genome length)
+  tmp <- read_tsv(files[i], col_names = F) %>% 
+    select(1,3,4) %>% rename(contig = X1, contig_length = X3, mapped_reads = X4) %>% 
+    separate(contig, into = c("isolate", "tmp"), sep='_NODE_') %>%
+    mutate(contig = paste("NODE_", tmp, sep = "")) %>% select(isolate, contig_length, mapped_reads) %>% 
+    group_by(isolate) %>% 
+    mutate(map_reads = sum(mapped_reads)) %>% 
+    ungroup() %>% 
+    select(isolate, map_reads) %>% unique()
+  colnames(tmp) <- c("isolate", newcol$date)
+  
+  ifelse(i==1, mg_ic <- tmp, mg_ic <- full_join(mg_ic, tmp, by = "isolate"))
+  }
+  return(mg_ic)
+}
+```
+```{r}
+# get total reads and mapped counts per sample
+filesMGc <-  paste(data.dir, list.files(data.dir), sep="/") %>% .[grep(".mg.contig_flagstat.txt", .)] 
+filesMTc <-  paste(data.dir, list.files(data.dir), sep="/") %>% .[grep(".mt.contig_flagstat.txt", .)]
+mg_c <- read_tbs_m(filesMGc, sample2date)
+mt_c <- read_tbs_m(filesMTc, sample2date)
+
+# genomes lenght
+  iso_genome <- read_tsv(files[i], col_names = F) %>% 
+    select(1,3,4) %>% rename(contig = X1, contig_length = X3, mapped_reads = X4) %>% 
+    separate(contig, into = c("isolate", "tmp"), sep='_NODE_') %>%
+    mutate(contig = paste("NODE_", tmp, sep = "")) %>% select(isolate, contig_length, mapped_reads) %>% 
+    group_by(isolate) %>% 
+    mutate(genome_length = sum(contig_length)) %>% 
+    select(isolate, genome_length) %>% unique()
+
+# get total counts per isolate
+filesMGcov <-  paste(data.dir, list.files(data.dir), sep="/") %>% .[grep(".mg.contig_coverage.txt", .)] 
+filesMTcov <-  paste(data.dir, list.files(data.dir), sep="/") %>% .[grep(".mt.contig_coverage.txt", .)] 
+
+mg_ic <- get_reads_mapped_per_isolate_m(filesMGcov, sample2date)
+mt_ic <- get_reads_mapped_per_isolate_m(filesMTcov, sample2date)
+```
+
+#####Get final table
+```{r}
+mg_c %>% 
+  gather(date, counts, -value) %>% 
+  spread(value, counts) -> counts_ts
+
+mg_ic %>% 
+  gather(date, iso_count, -isolate) %>% 
+  full_join(., iso_genome) %>% 
+  full_join(., counts_ts, by = "date") %>% 
+  mutate(abundance = (as.numeric(iso_count)/(as.numeric(total_reads)/1000000))*(as.numeric(genome_length)/1000)) %>% 
+  select(isolate, date, abundance) %>% 
+  spread(date, abundance) -> mapR_divTotRead_divLength
+  
+#write_tsv(mapR_divTotRead_divLength, "~/Documents/Isolates/mg_mappedReadsByTotalByIsoLenght.tsv")
+
+mt_c %>% 
+  gather(date, counts, -value) %>% 
+  spread(value, counts) -> counts_ts
+
+mt_ic %>% 
+  gather(date, iso_count, -isolate) %>% 
+  full_join(., iso_genome) %>% 
+  full_join(., counts_ts, by = "date") %>% 
+  mutate(abundance = as.numeric(iso_count)/((as.numeric(total_reads)/1000000)*(as.numeric(genome_length)/1000))) %>% 
+  select(isolate, date, abundance) %>% 
+  spread(date, abundance) -> mapR_divTotRead_divLengthMT
+  
+#write_tsv(mapR_divTotRead_divLengthMT, "~/Documents/Isolates/mt_mappedReadsByTotalByIsoLenght.tsv")
+
+mgmt_ratio <- as.tibble(mapR_divTotRead_divLengthMT[,-1]/mapR_divTotRead_divLength[,-1]) %>% mutate(isolates = mapR_divTotRead_divLengthMT$isolate)
+
+#write_tsv(mgmt_ratio, "~/Documents/Isolates/mtmgRatio_mappedReadsByTotalByIsoLenght.tsv")
+
+```
+

@@ -1,0 +1,13 @@
+rule rename_annotation:
+    input:
+        "%s/{isolate}/Assembly_2017/Analysis/annotation/annotation.filt.gff" % ISOLATES_DIR
+    output:
+        "RenamedIsolates/{isolate}.gff",
+        "RenamedIsolates/{isolate}_renaming_annotation.done"
+    shell:
+        """
+        mkdir -p RenamedIsolates
+        
+        cat {input} | sed -e "s/NODE/{wildcards.isolate}_NODE/g"  > RenamedIsolates/{wildcards.isolate}.gff
+        touch {output}
+        """

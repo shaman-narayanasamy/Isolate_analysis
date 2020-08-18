@@ -1,0 +1,8 @@
+
+
+## gene annotation by prodigal, filter by genes related to CRISPR
+grep 'CRISPR' /mnt/nfs/projects/ecosystem_biology/LAO/Genomes/Isolate_00005/Assembly_2017/Analysis/annotation/annotation.filt.gff | cut -f 1,4,5,7,9 > Isolate_00005/cas.ann.gff
+
+# take contig, position of the gene (starting at least), strand, features
+
+## metaCRT results, take same info: contig, position of the CRISPR (start and end), 

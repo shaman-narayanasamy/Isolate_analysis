@@ -1,0 +1,15 @@
+rule kmer_count:
+    input:
+        'Preprocessing/r1.preprocessed.fq',
+        'Preprocessing/r2.preprocessed.fq',
+        'Preprocessing/se.preprocessed.fq'
+    output:
+        expand(
+            "Analysis/kmer-counts/kmer{kmer}.{ext}", kmer=config["kmc3"]["kmer"],
+            ext=['kmc_suf', 'kmc_pre', 'txt'])
+    shell:
+        """
+        mkdir -p Analysis/kmer-counts
+	kmc -k{config[kmc3][kmer]} -m{config[memory_total_gb]} -t{THREADS} -fq @<(\ls -1 {input}) Analysis/kmer-counts/kmer{config[kmc3][kmer]} Analysis/kmer-counts
+        kmc_dump Analysis/kmer-counts/kmer{config[kmc3][kmer]} {output[2]} 
+        """

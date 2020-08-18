@@ -1,0 +1,19 @@
+rule run_metaquast_isolate:
+    input:
+        "RenamedIsolates/{isolate}.fa"
+    output:
+        "MetaQuast/{isolate}/summary/report.html"
+    shell:
+        """
+        mkdir -p MetaQuast/{wildcards.isolate}
+
+        METAQUAST="/mnt/nfs/projects/ecosystem_biology/local_tools/IMP/dependencies/quast/metaquast.py"
+        python2 $METAQUAST -t {THREADS} -o MetaQuast/{wildcards.isolate} {input[0]} --max-ref-number {config[metaquast][max_genomes]}
+        FFILE="MetaQuast/{wildcards.isolate}/combined_quast_output/contigs_reports/nucmer_output/aux/contigs.coords"
+
+        if [ -f $FFILE ];then
+        sed -e 's/|//g' $FFILE | sed -e 's/*\s/\t/g' | tail -n +3 > {output}
+        else
+        touch {output}
+        fi
+        """

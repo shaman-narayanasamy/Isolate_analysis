@@ -1,0 +1,13 @@
+rule rename_isolates:
+    input:
+        "%s/{isolate}/Assembly_2017/Assembly/contigs.fasta" % ISOLATES_DIR
+    output:
+        "RenamedIsolates/{isolate}.fa",
+        "RenamedIsolates/{isolate}_renaming.done"
+    shell:
+        """
+        mkdir -p RenamedIsolates
+        
+        cat {ISOLATES_DIR}/{wildcards.isolate}/Assembly_2017/Assembly/contigs.fasta | sed -e "s/>/>{wildcards.isolate}_/g"  > RenamedIsolates/{wildcards.isolate}.fa
+        touch {output}
+        """

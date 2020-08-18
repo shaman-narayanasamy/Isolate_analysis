@@ -1,0 +1,20 @@
+rule metaquast:
+    input:
+        'Assembly/contigs.fasta'
+    output:
+        "Analysis/results/quast/summary/report.html",
+        "Analysis/results/quast/transposed_report.tsv"
+    shell:
+        """
+        mkdir -p Analysis/results
+
+
+        METAQUAST="/mnt/nfs/projects/ecosystem_biology/local_tools/IMP/dependencies/quast/metaquast.py"
+        python2 $METAQUAST -t {THREADS} -o Analysis/results/quast {input[0]} --max-ref-number {config[metaquast][max_genomes]}
+        FFILE="Analysis/results/quast/combined_quast_output/contigs_reports/nucmer_output/aux/contigs.coords"
+        if [ -f $FFILE ];then
+        sed -e 's/|//g' $FFILE | sed -e 's/*\s/\t/g' | tail -n +3 > {output}
+        else
+        touch {output}
+        fi
+        """

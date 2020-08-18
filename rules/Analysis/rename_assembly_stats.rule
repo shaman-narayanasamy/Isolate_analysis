@@ -1,0 +1,9 @@
+rule rename_assembly_stats:
+    input:
+        "Analysis/results/quast/transposed_report.tsv",
+    output:
+        "Analysis/results/quast/transposed_report-renamed.tsv",
+    shell:
+        """
+        sed -e 's/^contigs\t/{SAMPLE}\t/g' {input[0]} > {output[0]}
+        """

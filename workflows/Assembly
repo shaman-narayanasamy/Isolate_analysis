@@ -1,0 +1,14 @@
+include:
+    "../rules/Assembly/spades.rule"
+
+include:
+    "../rules/Assembly/mapping.rules"
+
+
+rule ASSEMBLY:
+    input:
+        'Assembly/contigs.fasta',
+        'Assembly/scaffolds.fasta',
+        "Assembly/%s.reads.sorted.bam" % SAMPLE
+    output:
+        touch('Assembly/assembly.done')

@@ -1,0 +1,53 @@
+include:
+    "../rules/Analysis/prokka.rule"
+
+include:
+    "../rules/Analysis/contig-length.rule"
+
+include:
+    "../rules/Analysis/contig-depth.rule"
+
+include:
+    "../rules/Analysis/fastqc.rules"
+
+include:
+    "../rules/Analysis/metaquast.rule"
+
+include:
+    "../rules/Analysis/rename_assembly_stats.rule"
+
+include:
+    "../rules/Analysis/kmc.rule"
+
+include:
+    "../rules/Analysis/rename_prot_seq.rule"
+
+include:
+    "../rules/Analysis/run_barrnap.rule"
+
+rule ANALYSIS:
+    input:
+        "Analysis/annotation/annotation.filt.gff",
+        "Analysis/annotation/{p}_renamed.faa".format(p=config['prokka']['prefix']),
+        "Analysis/contigs.length.txt",
+        "Analysis/contigs.gc_content.txt",
+        "Analysis/contig_coverage.txt",
+        "Analysis/contig_depth.txt",
+        "Analysis/contig_flagstat.txt",
+        "Analysis/fastqc/LAO-%s.r1.fq_fastqc.html" % SAMPLE,
+        "Analysis/fastqc/LAO-%s.r2.fq_fastqc.html" % SAMPLE,
+        'Analysis/fastqc/r1.preprocessed.fq_fastqc.html',
+        'Analysis/fastqc/r2.preprocessed.fq_fastqc.html',
+        'Analysis/fastqc/se.preprocessed.fq_fastqc.html',
+        'Analysis/fastqc/r1.preprocessed.fq_fastqc.zip',
+        'Analysis/fastqc/r2.preprocessed.fq_fastqc.zip',
+        'Analysis/fastqc/se.preprocessed.fq_fastqc.zip',
+        "Analysis/results/quast/summary/report.html",
+        "Analysis/results/quast/transposed_report-renamed.tsv",
+        'Analysis/rRNA/16S.fa',
+        'Analysis/rRNA/23S.fa',
+        expand(
+            "Analysis/kmer-counts/kmer{kmer}.{ext}", kmer=config["kmc3"]["kmer"],
+            ext=['kmc_suf', 'kmc_pre', 'txt']),
+    output:
+        touch('Analysis/analysis.done')

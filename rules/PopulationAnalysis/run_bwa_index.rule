@@ -1,0 +1,15 @@
+rule index_fasta:
+    input:
+        "Index/ALL_isolates.fa"
+    output:
+        "Index/ALL_isolates.fa.amb",
+        "Index/ALL_isolates.fa.bwt",
+        "Index/ALL_isolates.fa.pac",
+        "Index/ALL_isolates.fa.ann",
+        "Index/ALL_isolates.fa.sa"
+    shell:
+        """
+        bwa index {input}
+        """
+
+

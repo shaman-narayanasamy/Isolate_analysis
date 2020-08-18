@@ -1,0 +1,11 @@
+rule get_gc_content_isolate:
+    input:
+        "RenamedIsolates/{isolate}.fa",
+        "RenamedIsolates/{isolate}_renaming.done" 
+    output:
+        "Calculations/PopulationLevel/{isolate}_gc.txt"
+    shell:
+        """
+        mkdir -p Calculations/PopulationLevel
+        {SRCDIR}/get_gc_content.pl {input[0]} {output}
+        """

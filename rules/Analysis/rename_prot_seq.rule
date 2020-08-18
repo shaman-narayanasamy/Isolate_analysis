@@ -1,0 +1,9 @@
+rule rename_prot_seq:
+    input:
+        "Analysis/annotation/{p}.faa".format(p=config['prokka']['prefix']),
+    output:
+        "Analysis/annotation/{p}_renamed.faa".format(p=config['prokka']['prefix']),
+    shell:
+        """
+        sed -e 's/>/>{SAMPLE}_/g' {input} > {output}
+        """

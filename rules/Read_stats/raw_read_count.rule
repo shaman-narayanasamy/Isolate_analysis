@@ -1,0 +1,12 @@
+rule raw_read_count:
+    input:
+        "{inputdir}/LAO-{sample}.R1".format(inputdir=INPUTDIR, sample=SAMPLE),
+        "{inputdir}/LAO-{sample}.R2".format(inputdir=INPUTDIR, sample=SAMPLE)
+    output:
+        expand("Read_stats/read-counts/raw_read_counts.{ext}", ext=['txt'])
+    shell:
+        """
+        mkdir -p Read_stats/read-counts
+
+        paste <(echo $((`bzip2 -kdc {input[0]} | wc -l` / 4))) <(echo $((`bzip2 -kdc {input[0]} | wc -l` / 4))) > {output[0]} 
+        """

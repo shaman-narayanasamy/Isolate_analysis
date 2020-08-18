@@ -1,0 +1,11 @@
+rule pool_genomes:
+    input:
+        expand("RenamedIsolates/{isolate}.fa", isolate = ISOLATES),
+        expand("RenamedIsolates/{isolate}_renaming.done", isolate = ISOLATES)
+    output:
+        "Index/ALL_isolates.fa"
+    shell:
+        """
+        mkdir -p Index
+        cat {input} > {output}
+        """

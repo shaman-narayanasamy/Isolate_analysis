@@ -1,0 +1,9 @@
+rule get_genome_length_isolate:
+    input:
+       "RenamedIsolates/{isolate}.fa"
+    output:
+       "Calculations/PopulationLevel/{isolate}_length.txt"
+    shell:
+        """
+        {SRCDIR}/get_fasta_length.pl RenamedIsolates/{wildcards.isolate}.fa > Calculations/PopulationLevel/{wildcards.isolate}_length.txt
+        """

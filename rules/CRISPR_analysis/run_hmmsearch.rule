@@ -1,0 +1,9 @@
+rule run_hmmsearch_isolate:
+    input:
+        "%s/{isolate}_proteins.faa" % ISOLATE_PROT_DB
+    output:
+        "{isolate}/cas_genes.hmmsearch"
+    shell:
+        """
+        hmmsearch --cpu {THREADS} --noali --notextw --tblout {output[0]} {CAS_DB} {input[0]} > /dev/null
+        """

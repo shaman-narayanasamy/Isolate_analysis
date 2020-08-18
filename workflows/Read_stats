@@ -1,0 +1,37 @@
+## Input and output parameters
+#
+
+PWD = os.getcwd()
+
+SAMPLE = os.environ.get("SAMPLE")
+INPUTDIR = os.environ.get("INPUTDIR")
+OUTPUTDIR = os.environ.get("OUTPUTDIR")
+TMPDIR = os.environ.get("TMPDIR", "/tmp")
+SRCDIR = os.environ.get("SRCDIR", "%s/src" % PWD)
+CONFIG = os.environ.get("CONFIG", "conf/config_normalNode.json")
+DBPATH = os.environ.get("DBPATH", "/mnt/nfs/projects/ecosystem_biology/local_tools/IMP/dependencies/prokka/db")
+
+configfile: CONFIG
+
+MEMCORE = os.environ.get("MEMCORE", config['memory_per_core_gb'])
+THREADS = os.environ.get("THREADS", config['threads'])
+MEMTOTAL = os.environ.get("MEMTOTAL", config['memory_total_gb'])
+FILTER = os.environ.get("FILTER", "hg38")
+
+workdir:
+    OUTPUTDIR
+
+include:
+    "../rules/Read_stats/preprocessed_read_count.rule"
+
+include:
+    "../rules/Read_stats/raw_read_count.rule"
+
+rule READS_STATS:
+    input:
+        expand("Read_stats/read-counts/preprocessed_read_counts.{ext}", ext=['txt']),
+        expand("Read_stats/read-counts/raw_read_counts.{ext}", ext=['txt'])
+    output:
+        touch('Read_stats/read_stats.done')
+
+## Aggregate all the results by running the script ../src/aggregate_read_stats.sh

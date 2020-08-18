@@ -1,0 +1,19 @@
+rule run_barrnap:
+    input:
+        'Assembly/contigs.fasta'
+    output:
+        'Analysis/rRNA/rRNA.gff',
+        'Analysis/rRNA/16S.fa',
+        'Analysis/rRNA/23S.fa',
+    shell:
+       """
+       barrnap --threads {THREADS} {input} > {output[0]}
+
+       bedtools getfasta -fi {input[0]} -bed <(grep "16S" {output[0]}) -fo {output[1]}
+
+       bedtools getfasta -fi {input[0]} -bed <(grep "23S" {output[0]}) -fo {output[2]}
+
+       sed -e 's/>/>{SAMPLE}|/g' -i {output[1]}        
+
+       sed -e 's/>/>{SAMPLE}|/g' -i {output[2]}        
+       """

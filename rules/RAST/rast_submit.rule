@@ -1,0 +1,19 @@
+rule rast_submit:
+    input:
+        "%s/Analysis/annotation/prokka.gbk" % INPUTDIR
+    output:
+        "Analysis/annotation/rast_submission.done"
+    shell:
+       """
+       TOP="/mnt/nfs/projects/ecosystem_biology/local_tools/sas"
+       export PERL5LIB=$PERL5LIB:$TOP/lib:$TOP/modules/lib
+       export PATH=$PATH:$TOP/bin      
+       ID=`echo "$SAMPLE" | sed -e 's/Isolate_//g' | sed 's/[A-Za-z]*//g'`
+
+       echo "Runnign for $ID"
+
+       svr_submit_RAST_job --user luisekb --passwd N4UuTJEr --genbank {input[0]} --domain Bacteria \
+       --taxon_ID ${{ID}} --reannotate_only 
+       
+       touch {output}
+       """

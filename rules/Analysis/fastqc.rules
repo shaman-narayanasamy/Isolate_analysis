@@ -1,0 +1,43 @@
+rule fastqc_raw:
+    input:
+        "{inputdir}/LAO-{sample}.R1".format(inputdir=INPUTDIR, sample=SAMPLE),
+        "{inputdir}/LAO-{sample}.R2".format(inputdir=INPUTDIR, sample=SAMPLE)
+    output:
+        "Analysis/fastqc/LAO-%s.r1.fq_fastqc.html" % SAMPLE,
+        "Analysis/fastqc/LAO-%s.r2.fq_fastqc.html" % SAMPLE
+    shell:
+        """
+        # Decompress input files in the tmp directory
+        bunzip2 -c {input[0]} > {TMPDIR}/LAO-{SAMPLE}.r1.fq
+        bunzip2 -c {input[1]} > {TMPDIR}/LAO-{SAMPLE}.r2.fq
+
+        mkdir -p Analysis/fastqc
+        fastqc -o Analysis/fastqc -f fastq {TMPDIR}/LAO-{SAMPLE}.r1.fq {TMPDIR}/LAO-{SAMPLE}.r2.fq -t {THREADS} -d {TMPDIR}
+        """
+
+rule fastqc_preprocessed:
+    input:
+        'Preprocessing/r1.preprocessed.fq',
+        'Preprocessing/r2.preprocessed.fq',
+        'Preprocessing/se.preprocessed.fq',
+    output:
+        'Analysis/fastqc/r1.preprocessed.fq_fastqc.html',
+        'Analysis/fastqc/r2.preprocessed.fq_fastqc.html',
+        'Analysis/fastqc/se.preprocessed.fq_fastqc.html',
+        'Analysis/fastqc/r1.preprocessed.fq_fastqc.zip',
+        'Analysis/fastqc/r2.preprocessed.fq_fastqc.zip',
+        'Analysis/fastqc/se.preprocessed.fq_fastqc.zip'
+    shell:
+        """
+        mkdir -p Analysis/fastqc
+        if [[ -s {input[2]} ]]
+        then
+        fastqc -o Analysis/fastqc -f fastq {input} -t {THREADS} -d {TMPDIR}
+        else
+        echo "{input[2]} is empty, FastQC will not run for that file"
+        fastqc -o Analysis/fastqc -f fastq {input[0]} {input[1]} -t {THREADS} -d {TMPDIR}
+        echo "Creating empty files for {input[2]}..."
+        touch {output[2]}
+        echo "No single end reads were generated" > {output[5]}
+        fi
+        """

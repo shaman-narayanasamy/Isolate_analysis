@@ -1,0 +1,65 @@
+---
+title: "isolates_placing_16Stree_midas"
+author: "Malte Herold"
+date: "December 10, 2018"
+output: html_document
+---
+
+## libraries
+
+```{r setup, include=FALSE}
+library(ampvis2)
+library(tidyverse)
+library("Biostrings")
+# library(phyloseq)
+```
+
+## Set directories
+
+```{r}
+DATADIR <- "/media/mh/Elements/Uni_Lux/luise_paper/20181206_midastree"
+```
+
+## Load tables and data
+```{r}
+# midas field guide data from ampvis2
+data("MiF")
+data("MiDAS")
+
+MiF.fa = MiF[MiF$Fatty.acids.In.situ == "POS" | MiF$Fatty.acids.Other == "POS",]
+
+midas.fasta <- paste(DATADIR, "MiDAS_S123_2.1.3.fasta", sep="/")
+s = readDNAStringSet(midas.fasta)
+s.filt = s %>% filter(names %in% tax_tab_midas$ID)
+
+```
+
+## Prepare tables
+```{r}
+# combine tax with MiF
+# load tax table 
+taxfile <- paste0( DATADIR, "/", "MiDAS_S123_2.1.3.tax" )
+tax_table <- read_tsv( taxfile, col_names=c("ID","taxstring")) 
+tax_tab <- tax_table %>%
+  mutate(genus = gsub(".+;g__([^;]+);.+","\\1", taxstring))
+
+tax_tab_midas <- tax_tab %>% filter(genus %in% MiF$Genus)
+           
+           
+map(taxstring, function(x) phyloseq::parse_taxonomy_qiime(x) %>% unlist %>% t() %>% as.data.frame))
+
+tax <- tax_tab[1:3,] %>% mutate(tax_parsed = map(tax_parsed, function(x) as.data.frame(t(unlist(x))))) %>% unnest(tax_parsed)
+
+tax <- lapply(tax_tab$tax_parsed, cbind)
+
+phyloseq::parse_taxonomy_qiime(tax_table$taxstring[1])
+```
+
+## Prepare fasta
+```{r}
+#remove fasta entries that are not bacteria
+
+```
+
+
+
